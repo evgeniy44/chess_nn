@@ -25,6 +25,14 @@ import java.io.File;
 @SpringBootApplication
 public class Chess implements CommandLineRunner {
 
+    private final ChessFetcher trainFetcher;
+    private final ChessFetcher testFetcher;
+
+    public Chess(ChessFetcher trainFetcher, ChessFetcher testFetcher) {
+        this.trainFetcher = trainFetcher;
+        this.testFetcher = testFetcher;
+    }
+
     @Value("${resourcesPath}")
     private String resourcesPath;
     @Value("${trainingFileName}")
@@ -39,18 +47,11 @@ public class Chess implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         int batchSize = 1000; // batch size for each epoch
-        int rngSeed = 123;
-
-        ChessFetcher trainFetcher = new ChessFetcher(resourcesPath, trainingFileName);
-        ChessFetcher testFetcher = new ChessFetcher(resourcesPath, testFileName);
-
+        int rngSeed = 100;
 
         DataSetIterator chessTrain = new ChessDataSetIterator(batchSize, ChessFetcher.NUM_EXAMPLES, trainFetcher);
         DataSetIterator chessTest = new ChessDataSetIterator(batchSize, ChessFetcher.NUM_EXAMPLES_TEST, testFetcher);
 
-//        final int numRows = 28;
-//        final int numColumns = 28;
-//
         int outputNum = 12;
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(rngSeed) //include a random seed for reproducibility

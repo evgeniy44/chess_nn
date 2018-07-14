@@ -4,6 +4,8 @@ import chesspresso.game.Game;
 import chesspresso.move.Move;
 import chesspresso.pgn.PGNReader;
 import chesspresso.position.Position;
+import just.fun.chess.board.MoveConverter;
+import just.fun.chess.board.SimpleMove;
 import org.jetbrains.annotations.NotNull;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -20,11 +22,13 @@ public class ChessFetcher extends BaseDataFetcher {
     public static final int NUM_EXAMPLES = 4200000;
     public static final int NUM_EXAMPLES_TEST = 1200000;
     private PGNReader pgnReader;
+    private final MoveConverter moveConverter;
     private final String resourcesPath;
     private final String name;
     private Game game;
 
-    public ChessFetcher(String resourcesPath, String name)  {
+    public ChessFetcher(MoveConverter moveConverter, String resourcesPath, String name)  {
+        this.moveConverter = moveConverter;
         this.resourcesPath = resourcesPath;
         this.name = name;
         init();
@@ -79,7 +83,7 @@ public class ChessFetcher extends BaseDataFetcher {
             float[] featureVec = translatePosition(position);
             featureData[actualExamples] = featureVec;
 
-            float[] labelVec = translateMove(move);
+            float[] labelVec = moveConverter.convert(new SimpleMove(move)).getArray();
             labelData[actualExamples] = labelVec;
             actualExamples++;
 
@@ -92,22 +96,6 @@ public class ChessFetcher extends BaseDataFetcher {
         INDArray features = Nd4j.create(featureData);
         INDArray labels = Nd4j.create(labelData);
         curr = new DataSet(features, labels);
-    }
-
-    private float[] translateMove(Move move) {
-        float[] floats = new float[12];
-        String fromBinary = String.format("%6s", Integer.toBinaryString(move.getFromSqi())).replace(' ', '0');
-        String toBinary = String.format("%6s", Integer.toBinaryString(move.getToSqi())).replace(' ', '0');
-        int curentSymbol = 0;
-        for (int i = 0; i < fromBinary.length(); i++) {
-            floats[curentSymbol] = fromBinary.charAt(i) == '1' ? 1 : 0;
-            curentSymbol++;
-        }
-        for (int i = 0; i < toBinary.length(); i++) {
-            floats[curentSymbol] = toBinary.charAt(i) == '1' ? 1 : 0;
-            curentSymbol++;
-        }
-        return floats;
     }
 
     public static float[] translatePosition(Position position) {
