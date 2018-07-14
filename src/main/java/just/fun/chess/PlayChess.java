@@ -3,6 +3,10 @@ package just.fun.chess;
 import chesspresso.game.Game;
 import chesspresso.move.IllegalMoveException;
 import chesspresso.position.Position;
+import just.fun.chess.board.FloatArrayHolder;
+import just.fun.chess.board.MoveConverter;
+import just.fun.chess.board.PositionConverter;
+import just.fun.chess.board.SimpleMove;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -30,8 +34,9 @@ public class PlayChess {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
             System.out.print("Enter command : ");
-            float[] floats = ChessFetcher.translatePosition(position);
+            float[] floats = new PositionConverter().convert(position).getArray();
             INDArray output = network.output(Nd4j.create(floats));
+            SimpleMove move = new MoveConverter().reverse().convert(new FloatArrayHolder(output.toFloatVector()));
             String input = br.readLine();
         }
 

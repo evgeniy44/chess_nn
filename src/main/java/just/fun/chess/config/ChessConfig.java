@@ -3,6 +3,7 @@ package just.fun.chess.config;
 import just.fun.chess.Chess;
 import just.fun.chess.ChessFetcher;
 import just.fun.chess.board.MoveConverter;
+import just.fun.chess.board.PositionConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,13 +24,18 @@ public class ChessConfig {
     }
 
     @Bean
-    public ChessFetcher trainFetcher(MoveConverter moveConverter) {
-        return new ChessFetcher(moveConverter, resourcesPath, trainingFileName);
+    public PositionConverter positionConverter() {
+        return new PositionConverter();
     }
 
     @Bean
-    public ChessFetcher testFetcher(MoveConverter moveConverter) {
-        return new ChessFetcher(moveConverter, resourcesPath, testFileName);
+    public ChessFetcher trainFetcher(MoveConverter moveConverter, PositionConverter positionConverter) {
+        return new ChessFetcher(moveConverter, positionConverter, resourcesPath, trainingFileName);
+    }
+
+    @Bean
+    public ChessFetcher testFetcher(MoveConverter moveConverter, PositionConverter positionConverter) {
+        return new ChessFetcher(moveConverter, positionConverter, resourcesPath, testFileName);
     }
 
     @Bean

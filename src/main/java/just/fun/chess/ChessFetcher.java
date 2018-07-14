@@ -5,6 +5,7 @@ import chesspresso.move.Move;
 import chesspresso.pgn.PGNReader;
 import chesspresso.position.Position;
 import just.fun.chess.board.MoveConverter;
+import just.fun.chess.board.PositionConverter;
 import just.fun.chess.board.SimpleMove;
 import org.jetbrains.annotations.NotNull;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -23,12 +24,14 @@ public class ChessFetcher extends BaseDataFetcher {
     public static final int NUM_EXAMPLES_TEST = 1200000;
     private PGNReader pgnReader;
     private final MoveConverter moveConverter;
+    private final PositionConverter positionConverter;
     private final String resourcesPath;
     private final String name;
     private Game game;
 
-    public ChessFetcher(MoveConverter moveConverter, String resourcesPath, String name)  {
+    public ChessFetcher(MoveConverter moveConverter, PositionConverter positionConverter, String resourcesPath, String name)  {
         this.moveConverter = moveConverter;
+        this.positionConverter = positionConverter;
         this.resourcesPath = resourcesPath;
         this.name = name;
         init();
@@ -80,7 +83,7 @@ public class ChessFetcher extends BaseDataFetcher {
                 break;
             }
 
-            float[] featureVec = translatePosition(position);
+            float[] featureVec = positionConverter.convert(position).getArray();
             featureData[actualExamples] = featureVec;
 
             float[] labelVec = moveConverter.convert(new SimpleMove(move)).getArray();
@@ -96,20 +99,6 @@ public class ChessFetcher extends BaseDataFetcher {
         INDArray features = Nd4j.create(featureData);
         INDArray labels = Nd4j.create(labelData);
         curr = new DataSet(features, labels);
-    }
-
-    public static float[] translatePosition(Position position) {
-        float[] floats = new float[129];
-        int current = 0;
-        floats[current] = position.getPlyNumber() % 2;
-        current++;
-        for (int i = 0; i < 64; i++) {
-            floats[current] = position.getColor(i);
-            current++;
-            floats[current] = position.getPiece(i);
-            current++;
-        }
-        return floats;
     }
 
     private Position getPosition() {

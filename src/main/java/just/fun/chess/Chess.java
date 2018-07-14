@@ -59,7 +59,7 @@ public class Chess implements CommandLineRunner {
                 .updater(new Nesterovs(0.006, 0.9))
                 .list()
                 .layer(0, new DenseLayer.Builder() //create the first, input layer with xavier initialization
-                        .nIn(129)
+                        .nIn(65)
                         .nOut(1000)
                         .activation(Activation.RELU)
                         .weightInit(WeightInit.XAVIER)
@@ -85,7 +85,7 @@ public class Chess implements CommandLineRunner {
 ////        model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(1));
         model.setListeners(new ScoreIterationListener(1));
 //
-        int numEpochs = 20;
+        int numEpochs = 5;
         System.out.println("Train model....");
         for( int i=0; i<numEpochs; i++ ){
             System.out.println("Training model, epochs = " + i);
