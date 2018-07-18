@@ -39,15 +39,6 @@ public class ChessFetcher extends BaseDataFetcher {
         this.resourcesPath = resourcesPath;
         this.name = name;
         init();
-//
-//        int i = 0;
-//        while (getNextMove() != null) {
-//            i++;
-//            if (i % 1000 == 0) {
-//                System.out.println("Moves " + i);
-//            }
-//        }
-//        System.out.println("Total moves=" + i);
     }
 
     private void init() {
