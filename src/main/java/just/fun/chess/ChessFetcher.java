@@ -7,6 +7,7 @@ import chesspresso.position.Position;
 import just.fun.chess.board.MoveConverter;
 import just.fun.chess.board.PositionConverter;
 import just.fun.chess.board.SimpleMove;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -15,6 +16,8 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.util.Arrays.copyOfRange;
 
@@ -28,6 +31,7 @@ public class ChessFetcher extends BaseDataFetcher {
     private final String resourcesPath;
     private final String name;
     private Game game;
+    private List<TrainingExample> trainingExamples;
 
     public ChessFetcher(MoveConverter moveConverter, PositionConverter positionConverter, String resourcesPath, String name)  {
         this.moveConverter = moveConverter;
@@ -48,13 +52,49 @@ public class ChessFetcher extends BaseDataFetcher {
 
     private void init() {
         pgnReader = getPgnReader();
+        trainingExamples = new ArrayList<>();
         try {
             game = pgnReader.parseGame();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         game.goBackToLineBegin();
-        totalExamples = NUM_EXAMPLES;
+
+
+        while (true) {
+            Position position = getPosition();
+            if (position == null) {
+                break;
+            }
+            float[] positionVec = positionConverter.convert(position).getArray();
+            Move move = getNextMove();
+            if (move == null) {
+                break;
+            }
+            float[] actualMoveVec = moveConverter.convert(new SimpleMove(move)).getArray();
+
+            trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new float[]{1}));
+
+            int iter = 2;
+            for (short possibleMove : position.getAllMoves()) {
+                if (iter == 0) {
+                    break;
+                }
+                if (possibleMove == move.getShortMoveDesc()) {
+                    continue;
+                }
+                float[] possibleMoveVec = moveConverter.convert(new SimpleMove(Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove))).getArray();
+                trainingExamples.add(new TrainingExample(
+                        ArrayUtils.addAll(positionVec, possibleMoveVec),
+                        new float[]{0}));
+                iter--;
+            }
+            if (trainingExamples.size() % 10000 == 0) {
+                System.out.println("Added " + trainingExamples.size());
+            }
+        }
+
+        totalExamples = trainingExamples.size();
     }
 
     @NotNull
@@ -68,7 +108,7 @@ public class ChessFetcher extends BaseDataFetcher {
 
     @Override
     public boolean hasMore() {
-        return game != null;
+        return cursor < trainingExamples.size();
     }
 
     public synchronized void fetch(int numExamples) {
@@ -76,18 +116,9 @@ public class ChessFetcher extends BaseDataFetcher {
         float[][] labelData = new float[numExamples][0];
         int actualExamples = 0;
 
-        for (int i = 0; i < numExamples; i++) {
-            Position position = getPosition();
-            Move move = getNextMove();
-            if (move == null) {
-                break;
-            }
-
-            float[] featureVec = positionConverter.convert(position).getArray();
-            featureData[actualExamples] = featureVec;
-
-            float[] labelVec = moveConverter.convert(new SimpleMove(move)).getArray();
-            labelData[actualExamples] = labelVec;
+        for (int i = 0; actualExamples < numExamples; cursor++) {
+            featureData[actualExamples] = trainingExamples.get(cursor).getInput();
+            labelData[actualExamples] = trainingExamples.get(cursor).getScore();
             actualExamples++;
 
         }
@@ -137,7 +168,7 @@ public class ChessFetcher extends BaseDataFetcher {
     public void reset() {
         cursor = 0;
         curr = null;
-        init();
+//        init();
     }
 
     @Override

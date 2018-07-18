@@ -47,34 +47,34 @@ public class Chess implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         int batchSize = 1000; // batch size for each epoch
-        int rngSeed = 100;
+        int rngSeed = 7652;
 
         DataSetIterator chessTrain = new ChessDataSetIterator(batchSize, ChessFetcher.NUM_EXAMPLES, trainFetcher);
         DataSetIterator chessTest = new ChessDataSetIterator(batchSize, ChessFetcher.NUM_EXAMPLES_TEST, testFetcher);
 
-        int outputNum = 12;
+        int outputNum = 1;
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(rngSeed) //include a random seed for reproducibility
                 // use stochastic gradient descent as an optimization algorithm
                 .updater(new Nesterovs(0.006, 0.9))
                 .list()
                 .layer(0, new DenseLayer.Builder() //create the first, input layer with xavier initialization
-                        .nIn(65)
+                        .nIn(77)
                         .nOut(1000)
-                        .activation(Activation.RELU)
-                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.SIGMOID)
+                        .weightInit(WeightInit.SIGMOID_UNIFORM)
                         .build())
 //                .layer(1, new DenseLayer.Builder() //create the first, input layer with xavier initialization
 //                        .nIn(1000)
 //                        .nOut(1000)
-//                        .activation(Activation.RELU)
-//                        .weightInit(WeightInit.XAVIER)
+//                        .activation(Activation.SIGMOID)
+//                        .weightInit(WeightInit.SIGMOID_UNIFORM)
 //                        .build())
                 .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MSE) //create hidden layer
                         .nIn(1000)
                         .nOut(outputNum)
                         .activation(Activation.SIGMOID)
-                        .weightInit(WeightInit.XAVIER)
+                        .weightInit(WeightInit.SIGMOID_UNIFORM)
                         .build())
                 .pretrain(false).backprop(true) //use backpropagation to adjust weights
                 .build();
@@ -83,16 +83,16 @@ public class Chess implements CommandLineRunner {
         model.init();
 //        //print the score with every 1 iteration
 ////        model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(1));
-        model.setListeners(new ScoreIterationListener(1));
+        model.setListeners(new ScoreIterationListener(5));
 //
-        int numEpochs = 5;
+        int numEpochs = 15;
         System.out.println("Train model....");
         for( int i=0; i<numEpochs; i++ ){
             System.out.println("Training model, epochs = " + i);
             model.fit(chessTrain);
         }
 
-        File locationToSave = new File("MyMultiLayerNetwork.zip");      //Where to save the network. Note: the file is in .zip format - can be opened externally
+        File locationToSave = new File("MyMultiLayerNetwork2.zip");      //Where to save the network. Note: the file is in .zip format - can be opened externally
         boolean saveUpdater = true;                                             //Updater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this if you want to train your network more in the future
         ModelSerializer.writeModel(model, locationToSave, saveUpdater);
 
