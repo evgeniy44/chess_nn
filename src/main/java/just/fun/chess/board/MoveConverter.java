@@ -6,16 +6,16 @@ public class MoveConverter extends Converter<SimpleMove, FloatArrayHolder> {
 
     @Override
     protected FloatArrayHolder doForward(SimpleMove move) {
-        float[] floats = new float[12];
+        byte[] floats = new byte[12];
         String fromBinary = String.format("%6s", Integer.toBinaryString(move.getFrom())).replace(' ', '0');
         String toBinary = String.format("%6s", Integer.toBinaryString(move.getTo())).replace(' ', '0');
         int curentSymbol = 0;
         for (int i = 0; i < fromBinary.length(); i++) {
-            floats[curentSymbol] = fromBinary.charAt(i) == '1' ? 1 : 0;
+            floats[curentSymbol] = (byte) (fromBinary.charAt(i) == '1' ? 1 : 0);
             curentSymbol++;
         }
         for (int i = 0; i < toBinary.length(); i++) {
-            floats[curentSymbol] = toBinary.charAt(i) == '1' ? 1 : 0;
+            floats[curentSymbol] = (byte) (toBinary.charAt(i) == '1' ? 1 : 0);
             curentSymbol++;
         }
         return new FloatArrayHolder(floats);
@@ -31,7 +31,7 @@ public class MoveConverter extends Converter<SimpleMove, FloatArrayHolder> {
 
     private String asString(FloatArrayHolder floatArrayHolder) {
         StringBuilder builder = new StringBuilder();
-        for (Float item : floatArrayHolder.getArray()) {
+        for (byte item : floatArrayHolder.getArray()) {
             builder.append(Math.round(item));
         }
         return builder.toString();

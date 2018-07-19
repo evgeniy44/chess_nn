@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class FloatArrayHolder {
-    private final float[] array;
+    private final byte[] array;
 }

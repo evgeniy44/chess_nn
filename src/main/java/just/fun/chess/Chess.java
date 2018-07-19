@@ -49,8 +49,8 @@ public class Chess implements CommandLineRunner {
         int batchSize = 1000; // batch size for each epoch
         int rngSeed = 7652;
 
-        DataSetIterator chessTrain = new ChessDataSetIterator(batchSize, ChessFetcher.NUM_EXAMPLES, trainFetcher);
-        DataSetIterator chessTest = new ChessDataSetIterator(batchSize, ChessFetcher.NUM_EXAMPLES_TEST, testFetcher);
+        DataSetIterator chessTrain = new ChessDataSetIterator(batchSize, trainFetcher.getExamplesNumber(), trainFetcher);
+        DataSetIterator chessTest = new ChessDataSetIterator(batchSize, testFetcher.getExamplesNumber(), testFetcher);
 
         int outputNum = 1;
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()

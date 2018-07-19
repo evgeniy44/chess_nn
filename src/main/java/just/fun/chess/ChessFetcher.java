@@ -23,8 +23,6 @@ import static java.util.Arrays.copyOfRange;
 
 public class ChessFetcher extends BaseDataFetcher {
 
-    public static final int NUM_EXAMPLES = 4200000;
-    public static final int NUM_EXAMPLES_TEST = 1200000;
     private PGNReader pgnReader;
     private final MoveConverter moveConverter;
     private final PositionConverter positionConverter;
@@ -57,16 +55,16 @@ public class ChessFetcher extends BaseDataFetcher {
             if (position == null) {
                 break;
             }
-            float[] positionVec = positionConverter.convert(position).getArray();
+            byte[] positionVec = positionConverter.convert(position).getArray();
             Move move = getNextMove();
             if (move == null) {
                 break;
             }
-            float[] actualMoveVec = moveConverter.convert(new SimpleMove(move)).getArray();
+            byte[] actualMoveVec = moveConverter.convert(new SimpleMove(move)).getArray();
 
-            trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new float[]{1}));
+            trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new byte[]{1}));
 
-            int iter = 2;
+            int iter = 5;
             for (short possibleMove : position.getAllMoves()) {
                 if (iter == 0) {
                     break;
@@ -74,10 +72,10 @@ public class ChessFetcher extends BaseDataFetcher {
                 if (possibleMove == move.getShortMoveDesc()) {
                     continue;
                 }
-                float[] possibleMoveVec = moveConverter.convert(new SimpleMove(Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove))).getArray();
+                byte[] possibleMoveVec = moveConverter.convert(new SimpleMove(Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove))).getArray();
                 trainingExamples.add(new TrainingExample(
                         ArrayUtils.addAll(positionVec, possibleMoveVec),
-                        new float[]{0}));
+                        new byte[]{0}));
                 iter--;
             }
             if (trainingExamples.size() % 10000 == 0) {
@@ -97,6 +95,10 @@ public class ChessFetcher extends BaseDataFetcher {
         }
     }
 
+    public int getExamplesNumber() {
+        return trainingExamples.size();
+    }
+
     @Override
     public boolean hasMore() {
         return cursor < trainingExamples.size();
@@ -108,8 +110,8 @@ public class ChessFetcher extends BaseDataFetcher {
         int actualExamples = 0;
 
         for (int i = 0; actualExamples < numExamples; cursor++) {
-            featureData[actualExamples] = trainingExamples.get(cursor).getInput();
-            labelData[actualExamples] = trainingExamples.get(cursor).getScore();
+            featureData[actualExamples] = toFloatArray(trainingExamples.get(cursor).getInput());
+            labelData[actualExamples] = toFloatArray(trainingExamples.get(cursor).getScore());
             actualExamples++;
 
         }
@@ -121,6 +123,16 @@ public class ChessFetcher extends BaseDataFetcher {
         INDArray features = Nd4j.create(featureData);
         INDArray labels = Nd4j.create(labelData);
         curr = new DataSet(features, labels);
+    }
+
+    private float[] toFloatArray(byte[] byteArray) {
+        float[] doubles = new float[byteArray.length];
+
+        for(int i = 0; i < doubles.length; ++i) {
+            doubles[i] = byteArray[i];
+        }
+
+        return doubles;
     }
 
     private Position getPosition() {

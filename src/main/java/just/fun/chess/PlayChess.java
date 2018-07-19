@@ -102,14 +102,14 @@ public class PlayChess {
     }
 
     private static short getSuitableMove(Game game, MultiLayerNetwork network) {
-        float[] positionVec = new PositionConverter().convert(game.getPosition()).getArray();
+        byte[] positionVec = new PositionConverter().convert(game.getPosition()).getArray();
         short bestMove = 0;
         float bestScore = 0;
         for (short move : game.getPosition().getAllMoves()) {
-            float[] possibleMoveVec
+            byte[] possibleMoveVec
                     = new MoveConverter().convert(new SimpleMove(Move.getFromSqi(move), Move.getToSqi(move))).getArray();
-            float[] input = ArrayUtils.addAll(positionVec, possibleMoveVec);
-            INDArray output = network.output(Nd4j.create(input));
+            byte[] input = ArrayUtils.addAll(positionVec, possibleMoveVec);
+            INDArray output = network.output(Nd4j.create(toFloatArray(input)));
             float score = output.getFloat(0);
             if (score > bestScore) {
                 bestScore = score;
@@ -117,6 +117,16 @@ public class PlayChess {
             }
         }
         return bestMove;
+    }
+
+    private static float[] toFloatArray(byte[] byteArray) {
+        float[] doubles = new float[byteArray.length];
+
+        for(int i = 0; i < doubles.length; ++i) {
+            doubles[i] = byteArray[i];
+        }
+
+        return doubles;
     }
 
     public static void showPosition(Position position) {
