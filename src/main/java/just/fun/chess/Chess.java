@@ -59,7 +59,7 @@ public class Chess implements CommandLineRunner {
                 .updater(new Nesterovs(0.006, 0.9))
                 .list()
                 .layer(0, new DenseLayer.Builder() //create the first, input layer with xavier initialization
-                        .nIn(77)
+                        .nIn(76)
                         .nOut(1000)
                         .activation(Activation.SIGMOID)
                         .weightInit(WeightInit.SIGMOID_UNIFORM)
