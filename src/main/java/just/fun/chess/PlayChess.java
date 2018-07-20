@@ -107,7 +107,7 @@ public class PlayChess {
         float bestScore = 0;
         for (short move : game.getPosition().getAllMoves()) {
             byte[] possibleMoveVec
-                    = new MoveConverter().convert(new SimpleMove(Move.getFromSqi(move), Move.getToSqi(move))).getArray();
+                    = new MoveConverter().convert(new SimpleMove(Move.getFromSqi(move), Move.getToSqi(move), game.getPosition().getToPlay())).getArray();
             byte[] input = ArrayUtils.addAll(positionVec, possibleMoveVec);
             INDArray output = network.output(Nd4j.create(toFloatArray(input)));
             float score = output.getFloat(0);

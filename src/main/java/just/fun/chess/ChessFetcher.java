@@ -60,7 +60,7 @@ public class ChessFetcher extends BaseDataFetcher {
             if (move == null) {
                 break;
             }
-            byte[] actualMoveVec = moveConverter.convert(new SimpleMove(move)).getArray();
+            byte[] actualMoveVec = moveConverter.convert(new SimpleMove(move, position)).getArray();
 
             trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new byte[]{1}));
 
@@ -72,7 +72,8 @@ public class ChessFetcher extends BaseDataFetcher {
                 if (possibleMove == move.getShortMoveDesc()) {
                     continue;
                 }
-                byte[] possibleMoveVec = moveConverter.convert(new SimpleMove(Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove))).getArray();
+                byte[] possibleMoveVec = moveConverter.convert(new SimpleMove(
+                        Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove), position.getToPlay())).getArray();
                 trainingExamples.add(new TrainingExample(
                         ArrayUtils.addAll(positionVec, possibleMoveVec),
                         new byte[]{0}));
