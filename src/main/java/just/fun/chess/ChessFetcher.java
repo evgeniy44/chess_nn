@@ -18,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static java.util.Arrays.copyOfRange;
 
@@ -64,11 +65,12 @@ public class ChessFetcher extends BaseDataFetcher {
 
             trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new byte[]{1}));
 
-            int iter = 5;
-            for (short possibleMove : position.getAllMoves()) {
-                if (iter == 0) {
-                    break;
+            int iter = 2;
+            for (int i = 0; i < iter; i++) {
+                if (position.getAllMoves().length == 0) {
+                    continue;
                 }
+                short possibleMove = position.getAllMoves()[new Random().nextInt(position.getAllMoves().length)];
                 if (possibleMove == move.getShortMoveDesc()) {
                     continue;
                 }

@@ -58,19 +58,25 @@ public class Chess implements CommandLineRunner {
                 // use stochastic gradient descent as an optimization algorithm
                 .updater(new Nesterovs(0.006, 0.9))
                 .list()
-                .layer(0, new DenseLayer.Builder() //create the first, input layer with xavier initialization
+                .layer(0, new DenseLayer.Builder()
                         .nIn(76)
                         .nOut(1000)
-                        .activation(Activation.SIGMOID)
-                        .weightInit(WeightInit.SIGMOID_UNIFORM)
+                        .activation(Activation.RELU)
+                        .weightInit(WeightInit.XAVIER)
                         .build())
-//                .layer(1, new DenseLayer.Builder() //create the first, input layer with xavier initialization
-//                        .nIn(1000)
-//                        .nOut(1000)
-//                        .activation(Activation.SIGMOID)
-//                        .weightInit(WeightInit.SIGMOID_UNIFORM)
-//                        .build())
-                .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MSE) //create hidden layer
+                .layer(1, new DenseLayer.Builder()
+                        .nIn(1000)
+                        .nOut(1000)
+                        .activation(Activation.RELU)
+                        .weightInit(WeightInit.XAVIER)
+                        .build())
+                .layer(2, new DenseLayer.Builder()
+                        .nIn(1000)
+                        .nOut(1000)
+                        .activation(Activation.RELU)
+                        .weightInit(WeightInit.XAVIER)
+                        .build())
+                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.XENT)
                         .nIn(1000)
                         .nOut(outputNum)
                         .activation(Activation.SIGMOID)
@@ -78,28 +84,29 @@ public class Chess implements CommandLineRunner {
                         .build())
                 .pretrain(false).backprop(true) //use backpropagation to adjust weights
                 .build();
-//
+
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
-//        //print the score with every 1 iteration
-////        model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(1));
         model.setListeners(new ScoreIterationListener(5));
-//
+
         int numEpochs = 15;
         System.out.println("Train model....");
         for( int i=0; i<numEpochs; i++ ){
             System.out.println("Training model, epochs = " + i);
             model.fit(chessTrain);
+            File locationToSave = new File("Chess-NN-epoch-" + i + ".zip");
+            boolean saveUpdater = true;
+            ModelSerializer.writeModel(model, locationToSave, saveUpdater);
         }
 
-        File locationToSave = new File("MyMultiLayerNetwork2.zip");      //Where to save the network. Note: the file is in .zip format - can be opened externally
+        File locationToSave = new File("Chess-NN-complete.zip");      //Where to save the network. Note: the file is in .zip format - can be opened externally
         boolean saveUpdater = true;                                             //Updater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this if you want to train your network more in the future
         ModelSerializer.writeModel(model, locationToSave, saveUpdater);
 
-        Evaluation eval = new Evaluation(outputNum); //create an evaluation object with 10 possible classes
+        Evaluation eval = new Evaluation(outputNum);
         while(chessTest.hasNext()){
             DataSet next = chessTest.next();
-            INDArray output = model.output(next.getFeatureMatrix()); //get the networks prediction
+            INDArray output = model.output(next.getFeatureMatrix());
             eval.eval(next.getLabels(), output); //check the prediction against the true class
         }
 
