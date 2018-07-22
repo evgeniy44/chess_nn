@@ -65,7 +65,13 @@ public class PlayChess {
         while (true) {
             System.out.print("Enter command : ");
             String input = br.readLine();
-            short myMove = toMove(game, input);
+            short myMove = 0;
+            try {
+                myMove = toMove(game, input);
+            } catch (Exception e) {
+                System.out.println("Invalid move: " + input);
+                continue;
+            }
             printMove("My move: ", myMove);
             game.getPosition().doMove(myMove);
 
