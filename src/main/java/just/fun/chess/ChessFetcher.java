@@ -17,6 +17,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -26,6 +27,7 @@ import static java.util.Arrays.copyOfRange;
 
 public class ChessFetcher extends BaseDataFetcher {
 
+    private static final int RANDOM_MOVES_COUNT = 3;
     private PGNReader pgnReader;
     private final MoveConverter moveConverter;
     private final PositionConverter positionConverter;
@@ -34,7 +36,7 @@ public class ChessFetcher extends BaseDataFetcher {
     private Game game;
     private List<TrainingExample> trainingExamples;
     private Set<HashEntity> hashTable = new HashSet<>();
-    int skipped = 0;
+    private int skipped = 0;
 
     public ChessFetcher(MoveConverter moveConverter, PositionConverter positionConverter, String resourcesPath, String name)  {
         this.moveConverter = moveConverter;
@@ -50,6 +52,7 @@ public class ChessFetcher extends BaseDataFetcher {
         reloadPgn();
         trainingExamples = new ArrayList<>();
         prepareTrainingData();
+        Collections.shuffle(trainingExamples);
         totalExamples = trainingExamples.size();
     }
 
@@ -69,13 +72,13 @@ public class ChessFetcher extends BaseDataFetcher {
             byte[] actualMoveVec = moveConverter.convert(new SimpleMove(move, position)).getArray();
             trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new byte[]{1}));
             if (trainingExamples.size() % 10000 == 0) {
-                System.out.println("Added " + trainingExamples.size() + ", skipped: " + skipped);
+                log.info("Added " + trainingExamples.size() + ", skipped: " + skipped);
             }
         }
     }
 
     private void loadRandomMoves(Position position, int positionHash, byte[] positionVec) {
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < RANDOM_MOVES_COUNT; i++) {
             if (position.getAllMoves().length == 0) {
                 break;
             }
@@ -143,7 +146,10 @@ public class ChessFetcher extends BaseDataFetcher {
         float[][] labelData = new float[numExamples][0];
         int actualExamples = 0;
 
-        for (int i = 0; actualExamples < numExamples; cursor++) {
+        for (; actualExamples < numExamples; cursor++) {
+            if (cursor >= trainingExamples.size()) {
+                break;
+            }
             featureData[actualExamples] = toFloatArray(trainingExamples.get(cursor).getInput());
             labelData[actualExamples] = toFloatArray(trainingExamples.get(cursor).getScore());
             actualExamples++;
