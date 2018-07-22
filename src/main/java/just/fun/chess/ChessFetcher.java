@@ -17,8 +17,10 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import static java.util.Arrays.copyOfRange;
 
@@ -31,6 +33,8 @@ public class ChessFetcher extends BaseDataFetcher {
     private final String name;
     private Game game;
     private List<TrainingExample> trainingExamples;
+    private Set<HashEntity> hashTable = new HashSet<>();
+    int skipped = 0;
 
     public ChessFetcher(MoveConverter moveConverter, PositionConverter positionConverter, String resourcesPath, String name)  {
         this.moveConverter = moveConverter;
@@ -41,52 +45,79 @@ public class ChessFetcher extends BaseDataFetcher {
     }
 
     private void init() {
-        pgnReader = getPgnReader();
+        reloadPgn();
+        populateHashTable();
+        reloadPgn();
         trainingExamples = new ArrayList<>();
+        prepareTrainingData();
+        totalExamples = trainingExamples.size();
+    }
+
+    private void prepareTrainingData() {
+        while (true) {
+            Position position = getPosition();
+            if (position == null) {
+                break;
+            }
+            int positionHash = position.hashCode();
+            byte[] positionVec = positionConverter.convert(position).getArray();
+            loadRandomMoves(position, positionHash, positionVec);
+            Move move = getNextMove();
+            if (move == null) {
+                break;
+            }
+            byte[] actualMoveVec = moveConverter.convert(new SimpleMove(move, position)).getArray();
+            trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new byte[]{1}));
+            if (trainingExamples.size() % 10000 == 0) {
+                System.out.println("Added " + trainingExamples.size() + ", skipped: " + skipped);
+            }
+        }
+    }
+
+    private void loadRandomMoves(Position position, int positionHash, byte[] positionVec) {
+        for (int i = 0; i < 3; i++) {
+            if (position.getAllMoves().length == 0) {
+                break;
+            }
+            short possibleMove = position.getAllMoves()[new Random().nextInt(position.getAllMoves().length)];
+            if (hashTable.contains(new HashEntity(positionHash, possibleMove))) {
+                skipped++;
+                continue;
+            }
+            byte[] possibleMoveVec = moveConverter.convert(new SimpleMove(
+                    Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove), position.getToPlay())).getArray();
+            trainingExamples.add(new TrainingExample(
+                    ArrayUtils.addAll(positionVec, possibleMoveVec),
+                    new byte[]{0}));
+        }
+    }
+
+    private void populateHashTable() {
+        log.info("Calculating hash codes for known positions/moves...");
+        while (true) {
+            Position position = getPosition();
+            if (position == null) {
+                break;
+            }
+            int positionHash = position.hashCode();
+            Move move = getNextMove();
+            if (move == null) {
+                break;
+            }
+            int moveHash = move.getShortMoveDesc();
+            hashTable.add(new HashEntity(positionHash, moveHash));
+        }
+    }
+
+    private void reloadPgn() {
+        log.info("Loading PGN file...");
+        pgnReader = getPgnReader();
         try {
             game = pgnReader.parseGame();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         game.goBackToLineBegin();
-
-
-        while (true) {
-            Position position = getPosition();
-            if (position == null) {
-                break;
-            }
-            byte[] positionVec = positionConverter.convert(position).getArray();
-            Move move = getNextMove();
-            if (move == null) {
-                break;
-            }
-            byte[] actualMoveVec = moveConverter.convert(new SimpleMove(move, position)).getArray();
-
-            trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new byte[]{1}));
-
-            int iter = 2;
-            for (int i = 0; i < iter; i++) {
-                if (position.getAllMoves().length == 0) {
-                    continue;
-                }
-                short possibleMove = position.getAllMoves()[new Random().nextInt(position.getAllMoves().length)];
-                if (possibleMove == move.getShortMoveDesc()) {
-                    continue;
-                }
-                byte[] possibleMoveVec = moveConverter.convert(new SimpleMove(
-                        Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove), position.getToPlay())).getArray();
-                trainingExamples.add(new TrainingExample(
-                        ArrayUtils.addAll(positionVec, possibleMoveVec),
-                        new byte[]{0}));
-                iter--;
-            }
-            if (trainingExamples.size() % 10000 == 0) {
-                System.out.println("Added " + trainingExamples.size());
-            }
-        }
-
-        totalExamples = trainingExamples.size();
     }
 
     @NotNull
@@ -174,12 +205,10 @@ public class ChessFetcher extends BaseDataFetcher {
     public void reset() {
         cursor = 0;
         curr = null;
-//        init();
     }
 
     @Override
     public DataSet next() {
-        DataSet next = super.next();
-        return next;
+        return super.next();
     }
 }
