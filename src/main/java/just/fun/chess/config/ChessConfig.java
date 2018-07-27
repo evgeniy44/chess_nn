@@ -1,9 +1,12 @@
 package just.fun.chess.config;
 
-import just.fun.chess.Chess;
+import just.fun.chess.ChessTrainer;
 import just.fun.chess.ChessFetcher;
 import just.fun.chess.board.MoveConverter;
 import just.fun.chess.board.PositionConverter;
+import just.fun.chess.data.ChessDataBuilder;
+import just.fun.chess.data.GamesReader;
+import just.fun.chess.data.KnownMovesHashBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,17 +32,63 @@ public class ChessConfig {
     }
 
     @Bean
-    public ChessFetcher trainFetcher(MoveConverter moveConverter, PositionConverter positionConverter) {
-        return new ChessFetcher(moveConverter, positionConverter, resourcesPath, trainingFileName);
+    public ChessDataBuilder trainChessDataBuilder(MoveConverter moveConverter, PositionConverter positionConverter,
+                                                  KnownMovesHashBuilder trainKnownMovesHashBuilder,
+                                                  GamesReader trainHashGamesReader) {
+        return new ChessDataBuilder(moveConverter, positionConverter,  trainKnownMovesHashBuilder, trainHashGamesReader,
+                true);
     }
 
     @Bean
-    public ChessFetcher testFetcher(MoveConverter moveConverter, PositionConverter positionConverter) {
-        return new ChessFetcher(moveConverter, positionConverter, resourcesPath, testFileName);
+    public ChessDataBuilder testChessDataBuilder(MoveConverter moveConverter, PositionConverter positionConverter,
+                                                  KnownMovesHashBuilder testKnownMovesHashBuilder,
+                                                  GamesReader testHashGamesReader) {
+        return new ChessDataBuilder(moveConverter, positionConverter,  testKnownMovesHashBuilder, testHashGamesReader,
+                false);
     }
 
     @Bean
-    public Chess chess(ChessFetcher trainFetcher, ChessFetcher testFetcher) {
-        return new Chess(trainFetcher, testFetcher);
+    public GamesReader testGamesReader() {
+        return new GamesReader("/Users/yberloh/IdeaProjects/chessnn/", "test.pgn");
+    }
+
+    @Bean
+    public GamesReader testHashGamesReader() {
+        return new GamesReader("/Users/yberloh/IdeaProjects/chessnn/", "test.pgn");
+    }
+
+    @Bean
+    public GamesReader trainGamesReader() {
+        return new GamesReader("/Users/yberloh/IdeaProjects/chessnn/", "train.pgn");
+    }
+
+    @Bean
+    public GamesReader trainHashGamesReader() {
+        return new GamesReader("/Users/yberloh/IdeaProjects/chessnn/", "train.pgn");
+    }
+
+    @Bean
+    public KnownMovesHashBuilder trainKnownMovesHashBuilder(GamesReader trainGamesReader) {
+        return new KnownMovesHashBuilder(trainGamesReader);
+    }
+
+    @Bean
+    public KnownMovesHashBuilder testKnownMovesHashBuilder(GamesReader testGamesReader) {
+        return new KnownMovesHashBuilder(testGamesReader);
+    }
+
+    @Bean
+    public ChessFetcher trainFetcher(ChessDataBuilder trainChessDataBuilder) {
+        return new ChessFetcher(trainChessDataBuilder);
+    }
+
+    @Bean
+    public ChessFetcher testFetcher(ChessDataBuilder testChessDataBuilder) {
+        return new ChessFetcher(testChessDataBuilder);
+    }
+
+    @Bean
+    public ChessTrainer chess(ChessFetcher trainFetcher, ChessFetcher testFetcher) {
+        return new ChessTrainer(trainFetcher, testFetcher);
     }
 }

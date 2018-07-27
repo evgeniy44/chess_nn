@@ -27,7 +27,6 @@ public class KnownMovesHashBuilder {
     }
 
     private Set<MoveHash> getGameMovesHashes(Game game) {
-        log.info("Calculating hash codes for known positions/moves...");
         Set<MoveHash> gameMovesHashes = new HashSet<>();
         while (true) {
             Position position = game.getPosition();

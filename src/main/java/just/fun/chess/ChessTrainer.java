@@ -23,12 +23,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.File;
 
 @SpringBootApplication
-public class Chess implements CommandLineRunner {
+public class ChessTrainer implements CommandLineRunner {
 
     private final ChessFetcher trainFetcher;
     private final ChessFetcher testFetcher;
 
-    public Chess(ChessFetcher trainFetcher, ChessFetcher testFetcher) {
+    public ChessTrainer(ChessFetcher trainFetcher, ChessFetcher testFetcher) {
         this.trainFetcher = trainFetcher;
         this.testFetcher = testFetcher;
     }
@@ -41,7 +41,7 @@ public class Chess implements CommandLineRunner {
     private String testFileName;
 
     public static void main(String[] args) {
-        SpringApplication.run(Chess.class, args);
+        SpringApplication.run(ChessTrainer.class, args);
     }
 
     @Override
