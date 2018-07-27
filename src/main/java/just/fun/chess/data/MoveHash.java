@@ -1,4 +1,4 @@
-package just.fun.chess;
+package just.fun.chess.data;
 
 import lombok.Data;
 

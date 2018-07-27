@@ -1,7 +1,6 @@
 package just.fun.chess.data;
 
 import chesspresso.game.Game;
-import just.fun.chess.MoveHash;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;

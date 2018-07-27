@@ -1,7 +1,7 @@
 package just.fun.chess.config;
 
 import just.fun.chess.ChessTrainer;
-import just.fun.chess.ChessFetcher;
+import just.fun.chess.data.ChessFetcher;
 import just.fun.chess.board.MoveConverter;
 import just.fun.chess.board.PositionConverter;
 import just.fun.chess.data.ChessDataBuilder;

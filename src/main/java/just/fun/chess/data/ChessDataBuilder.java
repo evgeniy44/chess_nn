@@ -2,8 +2,6 @@ package just.fun.chess.data;
 
 import chesspresso.game.Game;
 import chesspresso.move.Move;
-import just.fun.chess.DataItem;
-import just.fun.chess.MoveHash;
 import just.fun.chess.board.MoveConverter;
 import just.fun.chess.board.PositionConverter;
 import just.fun.chess.board.SimpleMove;

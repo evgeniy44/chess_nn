@@ -1,5 +1,7 @@
 package just.fun.chess;
 
+import just.fun.chess.data.ChessDataSetIterator;
+import just.fun.chess.data.ChessFetcher;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;

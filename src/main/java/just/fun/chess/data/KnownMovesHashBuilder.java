@@ -3,7 +3,6 @@ package just.fun.chess.data;
 import chesspresso.game.Game;
 import chesspresso.move.Move;
 import chesspresso.position.Position;
-import just.fun.chess.MoveHash;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashSet;

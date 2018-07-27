@@ -37,17 +37,6 @@ public class MoveConverter extends Converter<SimpleMove, FloatArrayHolder> {
 
     @Override
     protected SimpleMove doBackward(FloatArrayHolder floatArrayHolder) {
-        String binary = asString(floatArrayHolder);
-        Integer from = Integer.parseInt(binary.substring(0, 6), 2);
-        Integer to = Integer.parseInt(binary.substring(6, 12), 2);
-        return new SimpleMove(from, to, 0);
-    }
-
-    private String asString(FloatArrayHolder floatArrayHolder) {
-        StringBuilder builder = new StringBuilder();
-        for (byte item : floatArrayHolder.getArray()) {
-            builder.append(Math.round(item));
-        }
-        return builder.toString();
+        throw new UnsupportedOperationException();
     }
 }

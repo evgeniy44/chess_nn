@@ -1,6 +1,5 @@
 package just.fun.chess.data;
 
-import just.fun.chess.DataItem;
 import just.fun.chess.board.MoveConverter;
 import just.fun.chess.board.PositionConverter;
 import org.junit.jupiter.api.Test;
