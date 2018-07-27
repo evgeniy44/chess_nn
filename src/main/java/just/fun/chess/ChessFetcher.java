@@ -1,144 +1,37 @@
 package just.fun.chess;
 
-import chesspresso.game.Game;
-import chesspresso.move.Move;
-import chesspresso.pgn.PGNReader;
-import chesspresso.position.Position;
-import just.fun.chess.board.MoveConverter;
-import just.fun.chess.board.PositionConverter;
-import just.fun.chess.board.SimpleMove;
-import org.apache.commons.lang3.ArrayUtils;
-import org.jetbrains.annotations.NotNull;
+import just.fun.chess.data.ChessDataBuilder;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.fetcher.BaseDataFetcher;
 import org.nd4j.linalg.factory.Nd4j;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
-import java.util.Set;
 
 import static java.util.Arrays.copyOfRange;
 
 public class ChessFetcher extends BaseDataFetcher {
 
-    private static final int RANDOM_MOVES_COUNT = 3;
-    private PGNReader pgnReader;
-    private final MoveConverter moveConverter;
-    private final PositionConverter positionConverter;
-    private final String resourcesPath;
-    private final String name;
-    private Game game;
-    private List<TrainingExample> trainingExamples;
-    private Set<HashEntity> hashTable = new HashSet<>();
-    private int skipped = 0;
+    private final ChessDataBuilder chessDataBuilder;
+    private List<DataItem> dataItems;
 
-    public ChessFetcher(MoveConverter moveConverter, PositionConverter positionConverter, String resourcesPath, String name)  {
-        this.moveConverter = moveConverter;
-        this.positionConverter = positionConverter;
-        this.resourcesPath = resourcesPath;
-        this.name = name;
+    public ChessFetcher(ChessDataBuilder chessDataBuilder) {
+        this.chessDataBuilder = chessDataBuilder;
         init();
     }
 
     private void init() {
-        reloadPgn();
-        populateHashTable();
-        reloadPgn();
-        trainingExamples = new ArrayList<>();
-        prepareTrainingData();
-        Collections.shuffle(trainingExamples);
-        totalExamples = trainingExamples.size();
-    }
-
-    private void prepareTrainingData() {
-        while (true) {
-            Position position = getPosition();
-            if (position == null) {
-                break;
-            }
-            int positionHash = position.hashCode();
-            byte[] positionVec = positionConverter.convert(position).getArray();
-            loadRandomMoves(position, positionHash, positionVec);
-            Move move = getNextMove();
-            if (move == null) {
-                break;
-            }
-            byte[] actualMoveVec = moveConverter.convert(new SimpleMove(move, position)).getArray();
-            trainingExamples.add(new TrainingExample(ArrayUtils.addAll(positionVec, actualMoveVec), new byte[]{1}));
-            if (trainingExamples.size() % 10000 == 0) {
-                log.info("Added " + trainingExamples.size() + ", skipped: " + skipped);
-            }
-        }
-    }
-
-    private void loadRandomMoves(Position position, int positionHash, byte[] positionVec) {
-        for (int i = 0; i < RANDOM_MOVES_COUNT; i++) {
-            if (position.getAllMoves().length == 0) {
-                break;
-            }
-            short possibleMove = position.getAllMoves()[new Random().nextInt(position.getAllMoves().length)];
-            if (hashTable.contains(new HashEntity(positionHash, possibleMove))) {
-                skipped++;
-                continue;
-            }
-            byte[] possibleMoveVec = moveConverter.convert(new SimpleMove(
-                    Move.getFromSqi(possibleMove), Move.getToSqi(possibleMove), position.getToPlay())).getArray();
-            trainingExamples.add(new TrainingExample(
-                    ArrayUtils.addAll(positionVec, possibleMoveVec),
-                    new byte[]{0}));
-        }
-    }
-
-    private void populateHashTable() {
-        log.info("Calculating hash codes for known positions/moves...");
-        while (true) {
-            Position position = getPosition();
-            if (position == null) {
-                break;
-            }
-            int positionHash = position.hashCode();
-            Move move = getNextMove();
-            if (move == null) {
-                break;
-            }
-            int moveHash = move.getShortMoveDesc();
-            hashTable.add(new HashEntity(positionHash, moveHash));
-        }
-    }
-
-    private void reloadPgn() {
-        log.info("Loading PGN file...");
-        pgnReader = getPgnReader();
-        try {
-            game = pgnReader.parseGame();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        game.goBackToLineBegin();
-    }
-
-    @NotNull
-    private PGNReader getPgnReader() {
-        try {
-            return new PGNReader(new FileInputStream(resourcesPath + name), name);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        dataItems = chessDataBuilder.prepareData();
+        totalExamples = dataItems.size();
     }
 
     public int getExamplesNumber() {
-        return trainingExamples.size();
+        return dataItems.size();
     }
 
     @Override
     public boolean hasMore() {
-        return cursor < trainingExamples.size();
+        return cursor < dataItems.size();
     }
 
     public synchronized void fetch(int numExamples) {
@@ -147,11 +40,11 @@ public class ChessFetcher extends BaseDataFetcher {
         int actualExamples = 0;
 
         for (; actualExamples < numExamples; cursor++) {
-            if (cursor >= trainingExamples.size()) {
+            if (cursor >= dataItems.size()) {
                 break;
             }
-            featureData[actualExamples] = toFloatArray(trainingExamples.get(cursor).getInput());
-            labelData[actualExamples] = toFloatArray(trainingExamples.get(cursor).getScore());
+            featureData[actualExamples] = toFloatArray(dataItems.get(cursor).getInput());
+            labelData[actualExamples] = toFloatArray(dataItems.get(cursor).getScore());
             actualExamples++;
 
         }
@@ -173,38 +66,6 @@ public class ChessFetcher extends BaseDataFetcher {
         }
 
         return doubles;
-    }
-
-    private Position getPosition() {
-        return game.getPosition();
-    }
-
-    private Move getNextMove() {
-        if (game.hasNextMove()) {
-            Move move = game.getNextMove();
-            game.goForward();
-            return move;
-        }
-        game = readNextGame();
-        if (game == null) {
-            return null;
-        }
-        game.goBackToLineBegin();
-        return getNextMove();
-    }
-
-    private Game readNextGame() {
-        for (int i = 0; i < 3; i++) {
-            try {
-                return pgnReader.parseGame();
-            } catch (Exception e) {
-                System.err.println("Couldn't read next game " + e.getMessage());
-                if (i == 2) {
-                    throw new IllegalStateException("Retries failed", e);
-                }
-            }
-        }
-        return null;
     }
 
     @Override
