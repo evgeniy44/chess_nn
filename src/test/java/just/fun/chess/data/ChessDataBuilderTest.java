@@ -5,6 +5,7 @@ import just.fun.chess.board.PositionConverter;
 import just.fun.chess.data.entity.DataItem;
 import org.assertj.core.util.Sets;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -35,6 +36,7 @@ class ChessDataBuilderTest {
     }
 
     @Test
+    @Disabled
     public void shouldNotBeInvalidRecords() {
         List<DataItem> dataItems = chessDataBuilder.prepareData();
         Set<byte[]> inputs = dataItems.stream()

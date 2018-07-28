@@ -30,9 +30,7 @@ public class MoveConverter extends Converter<SimpleMove, FloatArrayHolder> {
     }
 
     private int flip(int position) {
-        int col = position % 8;
-        int row = 7 - (position / 8);
-        return (row * 8) + col;
+        return 63 - position;
     }
 
     @Override

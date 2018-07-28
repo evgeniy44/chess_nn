@@ -42,18 +42,18 @@ class PositionConverterTest {
     @Test
     public void testForwardBlack() throws IllegalMoveException {
         Game game = new Game();
-        short regularMove = Move.getRegularMove(12, 28, false);
+        short regularMove = Move.getRegularMove(8, 16, false); //e2 e4
         game.getPosition().doMove(regularMove);
         FloatArrayHolder holder = new PositionConverter().convert(game.getPosition());
         byte expectedPositionArray[] = new byte[] {
-                (-1) * WHITE_ROOK, (-1) * WHITE_KNIGHT, (-1) * WHITE_BISHOP, (-1) * WHITE_QUEEN, (-1) * WHITE_KING, (-1) * WHITE_BISHOP, (-1) * WHITE_KNIGHT, (-1) * WHITE_ROOK,
-                (-1) * WHITE_PAWN, (-1) * WHITE_PAWN, (-1) * WHITE_PAWN, (-1) * WHITE_PAWN, (-1) * WHITE_PAWN, (-1) * WHITE_PAWN, (-1) * WHITE_PAWN, (-1) * WHITE_PAWN,
-                (-1) * NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE,
-                (-1) * NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE,
-                (-1) * NO_STONE, NO_STONE, NO_STONE, NO_STONE, (-1) * BLACK_PAWN, NO_STONE, NO_STONE, NO_STONE,
-                (-1) * NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE,
-                (-1) * BLACK_PAWN, (-1) * BLACK_PAWN, (-1) * BLACK_PAWN, (-1) * BLACK_PAWN, NO_STONE,(-1) *  BLACK_PAWN, (-1) * BLACK_PAWN, (-1) * BLACK_PAWN,
-                (-1) * BLACK_ROOK, (-1) * BLACK_KNIGHT, (-1) * BLACK_BISHOP, (-1) * BLACK_QUEEN, (-1) * BLACK_KING, (-1) * BLACK_BISHOP, (-1) * BLACK_KNIGHT, (-1) * BLACK_ROOK
+                WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_KING, WHITE_QUEEN, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK,
+                WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN,
+                NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE,
+                NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE,
+                NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE,
+                NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, NO_STONE, BLACK_PAWN,
+                BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, NO_STONE,
+                BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_KING, BLACK_QUEEN, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK
         };
         assertArrayEquals(holder.getArray(), expectedPositionArray);
     }
