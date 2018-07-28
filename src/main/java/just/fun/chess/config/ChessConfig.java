@@ -68,13 +68,13 @@ public class ChessConfig {
     }
 
     @Bean
-    public KnownMovesHashBuilder trainKnownMovesHashBuilder(GamesReader trainGamesReader) {
-        return new KnownMovesHashBuilder(trainGamesReader);
+    public KnownMovesHashBuilder trainKnownMovesHashBuilder(GamesReader trainGamesReader, MoveConverter moveConverter, PositionConverter positionConverter) {
+        return new KnownMovesHashBuilder(trainGamesReader, moveConverter, positionConverter);
     }
 
     @Bean
-    public KnownMovesHashBuilder testKnownMovesHashBuilder(GamesReader testGamesReader) {
-        return new KnownMovesHashBuilder(testGamesReader);
+    public KnownMovesHashBuilder testKnownMovesHashBuilder(GamesReader testGamesReader, MoveConverter moveConverter, PositionConverter positionConverter) {
+        return new KnownMovesHashBuilder(testGamesReader, moveConverter, positionConverter);
     }
 
     @Bean

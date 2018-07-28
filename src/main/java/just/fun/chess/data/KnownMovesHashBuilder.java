@@ -2,9 +2,13 @@ package just.fun.chess.data;
 
 import chesspresso.game.Game;
 import chesspresso.move.Move;
-import chesspresso.position.Position;
+import just.fun.chess.board.MoveConverter;
+import just.fun.chess.board.PositionConverter;
+import just.fun.chess.board.SimpleMove;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,33 +16,30 @@ import java.util.Set;
 public class KnownMovesHashBuilder {
 
     private final GamesReader gamesReader;
+    private final MoveConverter moveConverter;
+    private final PositionConverter positionConverter;
 
-    public KnownMovesHashBuilder(GamesReader gamesReader) {
+    public KnownMovesHashBuilder(GamesReader gamesReader, MoveConverter moveConverter, PositionConverter positionConverter) {
         this.gamesReader = gamesReader;
+        this.moveConverter = moveConverter;
+        this.positionConverter = positionConverter;
     }
 
-    public Set<MoveHash> getKnownMovesHashes() {
-        Set<MoveHash> hashes = new HashSet<>();
+    public Set<Integer> getKnownMovesHashes() {
+        Set<Integer> hashes = new HashSet<>();
         for (Game game : gamesReader.readGames()) {
             hashes.addAll(getGameMovesHashes(game));
         }
         return hashes;
     }
 
-    private Set<MoveHash> getGameMovesHashes(Game game) {
-        Set<MoveHash> gameMovesHashes = new HashSet<>();
-        while (true) {
-            Position position = game.getPosition();
-            if (position == null) {
-                break;
-            }
-            int positionHash = position.hashCode();
-            Move move = game.getNextMove();
-            if (move == null) {
-                break;
-            }
-            int moveHash = move.getShortMoveDesc();
-            gameMovesHashes.add(new MoveHash(positionHash, moveHash));
+    private Set<Integer> getGameMovesHashes(Game game) {
+        Set<Integer> gameMovesHashes = new HashSet<>();
+        while (game.hasNextMove()) {
+            byte[] moveBytes = moveConverter.convert(new SimpleMove(
+                    Move.getFromSqi(game.getNextMove().getShortMoveDesc()), Move.getToSqi(game.getNextMove().getShortMoveDesc()), game.getPosition().getToPlay())).getArray();
+            byte[] positionBytes = positionConverter.convert(game.getPosition()).getArray();
+            gameMovesHashes.add(Arrays.hashCode(ArrayUtils.addAll(positionBytes, moveBytes)));
             game.goForward();
         }
         return gameMovesHashes;
